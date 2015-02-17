@@ -1,0 +1,28 @@
+<nedis>
+	 <sentinels masterName="master" reflashWaitTimeMillis="5000" soTimeout="3000" slaveBackUp="true">
+		<sentinel host="10.16.40.61" port="8810" />
+		<sentinel host="10.16.40.54" port="8810" />
+		<sentinel host="10.16.40.55" port="8810"/>
+		<sentinel host="10.16.40.57" port="8810" />
+	</sentinels>  
+	<slave-pool>
+		<lifo>true</lifo>
+		<maxActive>100</maxActive>
+		<maxIdle>25</maxIdle>
+		<maxWait>300000</maxWait>
+		<minEvictableIdleTimeMillis>100000</minEvictableIdleTimeMillis>
+		<minIdle>25</minIdle>
+		<testOnBorrow>false</testOnBorrow>
+		<testOnReturn>false</testOnReturn>
+	</slave-pool>
+	<master-pool>
+		<lifo>true</lifo>
+		<maxActive>100</maxActive>
+		<maxIdle>25</maxIdle>
+		<maxWait>10000</maxWait>
+		<minEvictableIdleTimeMillis>5000</minEvictableIdleTimeMillis>
+		<minIdle>25</minIdle>
+		<testOnBorrow>false</testOnBorrow>
+		<testOnReturn>false</testOnReturn>
+	</master-pool>
+</nedis>
