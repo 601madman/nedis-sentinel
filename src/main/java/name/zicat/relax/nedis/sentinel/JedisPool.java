@@ -72,8 +72,9 @@ public abstract class JedisPool<T extends Jedis> {
 			}
 			if(internalPool == null) {
 				release(resource);
+			} else {
+				internalPool.returnObject(resource);	
 			}
-			internalPool.returnObject(resource);
 		} catch (Exception e) {
 			release(resource);
 		} 
