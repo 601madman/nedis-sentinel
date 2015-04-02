@@ -19,11 +19,10 @@ use nedis can develop high concurrency service which need to query redis as sour
 
 use it as a maven dependency
 > 
-	> `<dependency>
+
     <groupId>name.zicat</groupId>
     <artifactId>nedis-sentinel</artifactId>
     <version>3.0.0</version>
-</dependency>`
 
 To use it just
 
