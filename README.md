@@ -1,12 +1,30 @@
-# nedis-sentinel
-nedis-sentinel is a pooled,ha,lb java redis client. It bases on redis2.8 sentinel implement.
+**Nedis**
+----------
+Nedis is a ha java redis client.
 
-##How to build
->>Oracle JDK6 <br>
->>Maven <br>
->>>>\<dependency\><br>
->>>>>>\<groupId\>name.zicat\</groupId\> <br>
->>>>>>\<artifactId\>nedis-sentinel<\/artifactId\> <br>
->>>>>>\<version\>3.0.0<\/version\> <br>
->>\</dependency\><br>
+Nedis is a loadbalance java redis cleint.
 
+Nedis is a pooled feature java redis client.
+
+Nedis bases on redis 2.8 sentinel implement.
+
+
+**So what can I do with Nedis?**
+----------
+use nedis can develop high concurrency service which need to query redis as source.
+
+
+****How do I use it?***
+-------------------
+
+use it as a maven dependency
+> 
+	> `<dependency>
+    <groupId>name.zicat</groupId>
+    <artifactId>nedis-sentinel</artifactId>
+    <version>3.0.0</version>
+</dependency>`
+
+To use it just
+
+> src/test/java/name/zicat/relax/nedis/test/biz/MainTest.java
