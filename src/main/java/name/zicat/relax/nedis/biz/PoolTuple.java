@@ -47,9 +47,19 @@ public class PoolTuple {
 	}
 	
 	public void destoryAll() {
-		firstPool.destroy();
-		firstPool = null;
-		lastPool.destroy();
-		lastPool = null;
+		try {
+			firstPool.destroy();
+		} catch(Throwable e) {
+			//nothing to do
+		} finally {
+			firstPool = null;
+			try {
+				lastPool.destroy();
+			} catch(Throwable e){
+				//nothing to do
+			} finally {
+				lastPool = null;
+			}
+		}
 	}
 }
