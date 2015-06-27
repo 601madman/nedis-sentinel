@@ -9,6 +9,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.apache.log4j.Logger;
 
+import com.newegg.ec.nedis.utils.NedisException;
+
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPubSub;
 import redis.clients.jedis.Protocol;
@@ -133,59 +135,43 @@ public class JedisSentinelMasterPool extends JedisPool<Jedis> {
 		}
 	}
 	
-	private HostAndPort initSentinels(Set<String> sentinels,
-			final String masterName) {
+	private HostAndPort initSentinels(Set<String> sentinels, final String masterName) {
 
+		log.info("Trying to find master from available Sentinels...");
 		HostAndPort master = null;
-		boolean running = true;
 
-		outer: while (running) {
+		for (String sentinel : sentinels) {
 
-			log.info("Trying to find master from available Sentinels...");
+			final HostAndPort hap = toHostAndPort(Arrays.asList(sentinel.split(":")));
 
-			for (String sentinel : sentinels) {
-
-				final HostAndPort hap = toHostAndPort(Arrays.asList(sentinel
-						.split(":")));
-
-				Jedis jedis = null;
-				try {
-					jedis = new Jedis(hap.host, hap.port);
-					if (master == null) {
-						master = toHostAndPort(jedis
-								.sentinelGetMasterAddrByName(masterName));
-						
-						break outer;
-					}
-				} catch (JedisConnectionException e) {
-					log.error("Cannot connect to sentinel running @ " + hap
-							+ ". Trying next one.");
-				} finally {
-					if(jedis != null) {
+			Jedis jedis = null;
+			try {
+				jedis = new Jedis(hap.host, hap.port);
+				master = toHostAndPort(jedis.sentinelGetMasterAddrByName(masterName));
+				break;
+			} catch (JedisConnectionException e) {
+				log.error("Cannot connect to sentinel running @ " + hap + ". Trying next one.");
+			} finally {
+				if(jedis != null) {
+					try {
+						jedis.quit();
+					} catch (Exception e) {}
+					finally {
 						try {
-							jedis.quit();
+							jedis.disconnect();
 						} catch (Exception e) {}
-						finally {
-							try {
-								jedis.disconnect();
-							} catch (Exception e) {}
-						}
 					}
 				}
 			}
-
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
+		}
+		
+		if(master == null) {
+			throw new NedisException("all sentinels maybe shutdown, please check!!!");
 		}
 
 		for (String sentinel : sentinels) {
-			final HostAndPort hap = toHostAndPort(Arrays.asList(sentinel
-					.split(":")));
-			MasterListener masterListener = new MasterListener(masterName,
-					hap.host, hap.port);
+			final HostAndPort hap = toHostAndPort(Arrays.asList(sentinel.split(":")));
+			MasterListener masterListener = new MasterListener(masterName, hap.host, hap.port);
 			masterListeners.add(masterListener);
 			masterListener.start();
 		}
@@ -300,7 +286,6 @@ public class JedisSentinelMasterPool extends JedisPool<Jedis> {
 		public void shutdown() {
 			try {
 				running.set(false);
-				// This isn't good, the Jedis object is not thread safe
 				j.disconnect();
 			} catch (Exception e) {
 			}
