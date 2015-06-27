@@ -8,10 +8,10 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import name.zicat.relax.nedis.utils.NedisException;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.apache.log4j.Logger;
 
+import com.newegg.ec.nedis.utils.NedisException;
 
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Protocol;
@@ -137,66 +137,50 @@ public class JedisSentinelSlavePool extends JedisPool<Jedis> {
 	 * @param masterName
 	 * @return
 	 */
-	private List<HostAndPort> initSentinels(Set<String> sentinels,
-			String masterName) {
+	private List<HostAndPort> initSentinels(Set<String> sentinels, String masterName) {
+		
+		log.info("Trying to find slaves from available Sentinels...");
 		List<HostAndPort> slaves = new ArrayList<HostAndPort>();
 
-		boolean running = true;
-		outer: while (running) {
+		for (String sentinel : sentinels) {
 
-			log.info("Trying to find slaves from available Sentinels...");
-			for (String sentinel : sentinels) {
+			final HostAndPort hap = toHostAndPort(Arrays.asList(sentinel.split(":")));
+			Jedis jedis = null;
+			try {
+				jedis = new Jedis(hap.host, hap.port);
+				List<Map<String, String>> slaveInfo = jedis.sentinelSlaves(masterName);
+				
+				for (Map<String, String> entry : slaveInfo) {
 
-				final HostAndPort hap = toHostAndPort(Arrays.asList(sentinel
-						.split(":")));
-				// create sentinel jedis object to get slave infomation
-				Jedis jedis = null;
-				try {
-					jedis = new Jedis(hap.host, hap.port);
-					if (slaves.isEmpty()) {
-						List<Map<String, String>> slaveInfo = jedis
-								.sentinelSlaves(masterName);
-						for (Map<String, String> entry : slaveInfo) {
-
-							String[] flagInfo = entry.get("flags").split(",");
-							
-							if(flagInfo.length == 1 && "slave".equalsIgnoreCase(flagInfo[0])) {
-								HostAndPort hostAndPort = new HostAndPort();
-								hostAndPort.host = entry.get("ip");
-								hostAndPort.port = Integer.valueOf(entry.get(
-										"port").trim());
-								slaves.add(hostAndPort);
-							}
-
-						}
-						if (!slaves.isEmpty()) {
-							break outer;
-						}
-					}
-				} catch (Exception e) {
-					log.error("Cannot connect to sentinel running @ " + hap
-							+ ". Try next one.");
-				} finally {
-					if(jedis != null) {
-						try {
-							jedis.quit();
-						} catch(Exception e) {}
-						finally {
-							try {
-								jedis.disconnect();
-							} catch(Exception e) {}
-						} 
+					String[] flagInfo = entry.get("flags").split(",");
+					if(flagInfo.length == 1 && "slave".equalsIgnoreCase(flagInfo[0])) {
+						HostAndPort hostAndPort = new HostAndPort();
+						hostAndPort.host = entry.get("ip");
+						hostAndPort.port = Integer.valueOf(entry.get("port").trim());
+						slaves.add(hostAndPort);
 					}
 				}
-			}
-			try {
-				log.warn("All sentinels down, cannot determine where is "
-						+ masterName + " master is running... sleeping 1000ms.");
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				log.warn(e);
+				break;
+			} catch (Exception e) {
+				log.error("Cannot connect to sentinel running @ " + hap + ". Try next one.");
+			} finally {
+				if(jedis != null) {
+					try {
+						jedis.quit();
+					} catch(Exception e) {}
+					finally {
+						try {
+							jedis.disconnect();
+						} catch(Exception e) {}
+					} 
+				}
 			}
 		}
+		
+		if(slaves.isEmpty()) {
+			throw new NedisException("all sentinels maybe shutdown, please check!!!");
+		}
+		
 		List<HostAndPort> sentinelsInfo = new ArrayList<HostAndPort>();
 		for(String str: sentinels) {
 			sentinelsInfo.add(toHostAndPort(Arrays.asList(str.split(":"))));
