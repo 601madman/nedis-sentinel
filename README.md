@@ -11,7 +11,7 @@ Nedis bases on redis 2.8 sentinel implement.
 
 **So what can I do with Nedis?**
 ----------
-use nedis can develop high concurrency service which need to query redis as source.
+nedis can be used to develop high concurrency service which need to query redis.
 
 
 ****How do I use it?***
