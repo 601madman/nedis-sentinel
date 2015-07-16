@@ -14,7 +14,7 @@ Nedis bases on redis 2.8 sentinel implement.
 nedis can be used to develop high concurrency service which need to query redis.
 
 
-****How do I use it?***
+****How used it?***
 -------------------
 
 use it as a maven dependency
