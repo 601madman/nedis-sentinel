@@ -8,10 +8,9 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import name.zicat.relax.nedis.utils.NedisException;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.apache.log4j.Logger;
-
-import com.newegg.ec.nedis.utils.NedisException;
 
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Protocol;
